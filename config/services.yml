@@ -1,0 +1,8 @@
+services:
+    dmzx.groupsintopic.listener:
+        class: dmzx\groupsintopic\event\listener
+        arguments:
+            - @user
+            - @dbal.conn
+        tags:
+            - { name: event.listener }
