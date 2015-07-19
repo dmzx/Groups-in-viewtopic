@@ -24,6 +24,11 @@
 		"display-name": "Groups in viewtopic",
 		"soft-require": {
 			"phpbb/phpbb": ">=3.1.0-a1,<3.2.*@dev"
+		},
+		"version-check": {
+			"host": "www.phpbb.com",
+			"directory": "/customise/db/extension/groups_in_viewtopic",
+			"filename": "version_check"
 		}
 	}
 }
