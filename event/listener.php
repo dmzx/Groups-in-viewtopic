@@ -104,7 +104,7 @@ class listener implements EventSubscriberInterface
 			{
 				$group_ids[] = $key;
 			}
-			if(in_array($user_cache['group_id'], $group_ids))
+			if (in_array($user_cache['group_id'], $group_ids))
 			{
 				$event['post_row'] = array_merge($event['post_row'],array(
 					'POSTER_GROUP'		=> $groups_name[$user_cache['group_id']],
