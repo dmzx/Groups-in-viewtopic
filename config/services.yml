@@ -2,6 +2,7 @@ services:
     dmzx.groupsintopic.listener:
         class: dmzx\groupsintopic\event\listener
         arguments:
+            - @cache
             - @user
             - @dbal.conn
         tags:
