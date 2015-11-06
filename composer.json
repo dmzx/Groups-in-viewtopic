@@ -2,7 +2,7 @@
 	"name": "dmzx/groupsintopic",
 	"type": "phpbb-extension",
 	"description": "This extension shows user groups in viewtopic",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"time": "2015-06-29",
 	"keywords": ["phpbb", "extension", "groupsintopic"],
 	"license": "GPL-2.0",
