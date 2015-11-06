@@ -97,16 +97,19 @@ class listener implements EventSubscriberInterface
 	{
 		$user_cache = $event['user_poster_data'];
 		$groups_name = $this->cache->get('_user_group_names');
-		$group_id = array();
-		foreach ($groups_name as $key => $value)
+		$group_ids = array();
+		if (sizeof($groups_name))
 		{
-			$group_ids[] = $key;
-		}
-		if (sizeof($groups_name) && in_array($user_cache['group_id'], $group_ids))
-		{
-			$event['post_row'] = array_merge($event['post_row'],array(
-				'POSTER_GROUP'		=> $groups_name[$user_cache['group_id']],
-			));
+			foreach ($groups_name as $key => $value)
+			{
+				$group_ids[] = $key;
+			}
+			if(in_array($user_cache['group_id'], $group_ids))
+			{
+				$event['post_row'] = array_merge($event['post_row'],array(
+					'POSTER_GROUP'		=> $groups_name[$user_cache['group_id']],
+				));
+			}
 		}
 	}
 
