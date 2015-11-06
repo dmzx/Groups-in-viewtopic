@@ -19,6 +19,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 */
 class listener implements EventSubscriberInterface
 {
+	/** @var \phpbb\cache\service */
+	protected $cache;
+
 	/** @var \phpbb\user */
 	protected $user;
 
@@ -27,12 +30,14 @@ class listener implements EventSubscriberInterface
 
 	/**
 	* Constructor
+	* @param \phpbb\cache\service				$cache
 	* @param \phpbb\user						$user
 	* @param \phpbb\db\driver\driver_interface	$db
 	*
 	*/
-	public function __construct(\phpbb\user $user, \phpbb\db\driver\driver_interface $db)
+	public function __construct(\phpbb\cache\service $cache, \phpbb\user $user, \phpbb\db\driver\driver_interface $db)
 	{
+		$this->cache = $cache;	
 		$this->user = $user;
 		$this->db = $db;
 	}
@@ -47,12 +52,40 @@ class listener implements EventSubscriberInterface
 	static public function getSubscribedEvents()
 	{
 		return array(
+			'core.viewtopic_before_f_read_check'		=> 'build_group_name_cache',
 			'core.viewtopic_modify_post_row'			=> 'viewtopic_modify_post_row',
 			'core.viewtopic_cache_user_data'			=> 'viewtopic_cache_user_data',
 			'core.viewtopic_cache_guest_data'			=> 'viewtopic_cache_guest_data',
 		);
 	}
 
+	/**
+	* Build a cache of group names
+	*
+	* @param object $event The event object
+	* @return null
+	* @access public
+	*/
+	public function build_group_name_cache($event)
+	{
+		if (($this->cache->get('_user_group_names')) === false)
+		{
+			$sql = 'SELECT group_id, group_name, group_type
+				FROM ' . GROUPS_TABLE . '
+				WHERE group_type <> ' . GROUP_HIDDEN;
+			$result = $this->db->sql_query($sql);
+			$user_group_names = array();
+
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$user_group_names[$row['group_id']] = ($row['group_type'] == GROUP_SPECIAL) ? $this->user->lang['G_' . $row['group_name']] : $row['group_name'];
+			}
+			$this->db->sql_freeresult($result);
+
+			// cache this data for 5 minutes
+			$this->cache->put('_user_group_names', $user_group_names, 300);
+		}
+	}
 	/**
 	* Modify the viewtopic post row
 	*
@@ -62,23 +95,22 @@ class listener implements EventSubscriberInterface
 	*/
 	public function viewtopic_modify_post_row($event)
 	{
-		$row = $event['row'];
 		$user_cache = $event['user_poster_data'];
-
-		// Groups in viewtopic
-		$sql = 'SELECT group_id, group_name, group_type
-		FROM ' . GROUPS_TABLE . '
-		WHERE group_type <> ' . GROUP_HIDDEN;
-		$result = $this->db->sql_query($sql);
-		while ($row = $this->db->sql_fetchrow($result))
+		$groups_name = $this->cache->get('_user_group_names');
+		$group_ids = array();
+		if (sizeof($groups_name))
 		{
-		$groups_name[$row['group_id']] = ($row['group_type'] == GROUP_SPECIAL) ? $this->user->lang['G_' . $row['group_name']] : $row['group_name'];
+			foreach ($groups_name as $key => $value)
+			{
+				$group_ids[] = $key;
+			}
+			if (in_array($user_cache['group_id'], $group_ids))
+			{
+				$event['post_row'] = array_merge($event['post_row'],array(
+					'POSTER_GROUP'		=> $groups_name[$user_cache['group_id']],
+				));
+			}
 		}
-		$this->db->sql_freeresult($result);
-
-		$event['post_row'] = array_merge($event['post_row'],array(
-			'POSTER_GROUP'		=> $groups_name[$user_cache['group_id']],
-		));
 	}
 
 	/**
