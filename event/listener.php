@@ -37,7 +37,7 @@ class listener implements EventSubscriberInterface
 	*/
 	public function __construct(\phpbb\cache\service $cache, \phpbb\user $user, \phpbb\db\driver\driver_interface $db)
 	{
-		$this->cache = $cache;	
+		$this->cache = $cache;
 		$this->user = $user;
 		$this->db = $db;
 	}
