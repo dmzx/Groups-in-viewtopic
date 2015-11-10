@@ -30,6 +30,12 @@ class listener implements EventSubscriberInterface
 	/** @var \phpbb\db\driver\driver_interface */
 	protected $db;
 
+	/** @var string phpBB root path */
+	protected $root_path;
+
+	/** @var string phpEx */
+	protected $php_ext;
+
 	/**
 	* Constructor
 	* @param \phpbb\auth\auth					$auth			Auth object
@@ -38,12 +44,14 @@ class listener implements EventSubscriberInterface
 	* @param \phpbb\db\driver\driver_interface	$db
 	*
 	*/
-	public function __construct(\phpbb\auth\auth $auth, \phpbb\cache\service $cache, \phpbb\user $user, \phpbb\db\driver\driver_interface $db)
+	public function __construct(\phpbb\auth\auth $auth, \phpbb\cache\service $cache, \phpbb\user $user, \phpbb\db\driver\driver_interface $db, $root_path, $php_ext)
 	{
 		$this->auth = $auth;
 		$this->cache = $cache;
 		$this->user = $user;
 		$this->db = $db;
+		$this->root_path = $root_path;
+		$this->php_ext = $php_ext;		
 	}
 
 	/**
@@ -75,7 +83,7 @@ class listener implements EventSubscriberInterface
 		if (($this->cache->get('_user_groups')) === false)
 		{
 			$sql_ary = array(
-				'SELECT'	=> 'ug.user_id, g.group_name, g.group_colour, g.group_type',
+				'SELECT'	=> 'ug.user_id, g.group_name, g.group_colour, g.group_type, g.group_id',
 				'FROM'		=> array(
 					USERS_TABLE => 'u',
 				),
@@ -121,34 +129,35 @@ class listener implements EventSubscriberInterface
 	{
 		$user_cache = $event['user_poster_data'];
 		$users_groups = $this->cache->get('_user_groups');
-		$user_id = $event['user_poster_data']['user_id'];
+		$user_id = (int) $event['user_poster_data']['user_id'];
 
 		if ($user_id == ANONYMOUS)
-			{
+		{
 			return;
-			}
+		}
 
 		if (sizeof($users_groups))
 		{
-			$user_in_groups = '<select name="group_select">';
+			$user_in_groups = '<ul>';
 
 			foreach ($users_groups[$user_cache['user_id']] as $key => $value)
 			{
 				if ($value['group_type'] == GROUP_HIDDEN && (!$this->auth->acl_gets('a_group', 'a_groupadd', 'a_groupdel') || $user_id != (int) $this->user->data['user_id']))
-			{
+				{
 					continue;
 				}
 				$group_name = isset($this->user->lang['G_' . $value['group_name']]) ? $this->user->lang['G_' . $value['group_name']] : $value['group_name'];
+				$group_link = append_sid("{$this->root_path}memberlist.$this->php_ext", 'mode=group&amp;g=' . $value['group_id']);
 				$group_colour = (!empty($value['group_colour'])) ? 'style="color:#' . $value['group_colour'] . ';"': '';
-				$user_in_groups .= '<option value="' . $group_link . '" ' . $group_colour . '>' . $group_name . '</option>';
+				$user_in_groups .= '<li><a href=' . $group_link . ' ' . $group_colour . '>' . $group_name . '</a></li>';
 			}
-			$user_in_groups .= '</select>';
+			$user_in_groups .= '</ul>';
 
-				$event['post_row'] = array_merge($event['post_row'],array(
-				'POSTER_GROUP'		=> $user_in_groups,
-				));
-			}
+			$event['post_row'] = array_merge($event['post_row'],array(
+			'POSTER_GROUP'		=> $user_in_groups,
+			));
 		}
+	}
 
 	/**
 	* Update viewtopic user data
