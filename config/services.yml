@@ -2,8 +2,11 @@ services:
     dmzx.groupsintopic.listener:
         class: dmzx\groupsintopic\event\listener
         arguments:
+            - @auth
             - @cache
             - @user
             - @dbal.conn
+            - %core.root_path%
+            - %core.php_ext%			
         tags:
             - { name: event.listener }
