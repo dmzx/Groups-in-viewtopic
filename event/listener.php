@@ -98,7 +98,7 @@ class listener implements EventSubscriberInterface
 					),
 				),
 				'WHERE'		=> $this->db->sql_in_set('u.user_type', array(USER_FOUNDER, USER_NORMAL)) . ' AND ug.user_pending = 0',
-				'ORDER_BY'	=> 'g.group_name',
+				'ORDER_BY'	=> 'u.user_id ASC, g.group_name',
 			);
 			$result = $this->db->sql_query($this->db->sql_build_query('SELECT', $sql_ary));
 
@@ -127,20 +127,14 @@ class listener implements EventSubscriberInterface
 	*/
 	public function viewtopic_modify_post_row($event)
 	{
-		$user_cache = $event['user_poster_data'];
 		$users_groups = $this->cache->get('_user_groups');
-		$user_id = (int) $event['user_poster_data']['user_id'];
+		$user_id = $event['user_poster_data']['user_id'];
 
-		if ($user_id == ANONYMOUS)
-		{
-			return;
-		}
-
-		if (sizeof($users_groups))
+		if (!empty($users_groups[$user_id]))
 		{
 			$user_in_groups = '<ul>';
 
-			foreach ($users_groups[$user_cache['user_id']] as $key => $value)
+			foreach ($users_groups[$user_id] as $key => $value)
 			{
 				if ($value['group_type'] == GROUP_HIDDEN && (!$this->auth->acl_gets('a_group', 'a_groupadd', 'a_groupdel') || $user_id != (int) $this->user->data['user_id']))
 				{
