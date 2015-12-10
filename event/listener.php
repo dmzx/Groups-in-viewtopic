@@ -1,6 +1,6 @@
 <?php
 /**
-*
+	*
 * @package phpBB Extension - Groups in viewtopic
 * @copyright (c) 2015 dmzx - http://www.dmzx-web.net
 * @license http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
@@ -8,9 +8,7 @@
 */
 
 namespace dmzx\groupsintopic\event;
-/**
-* @ignore
-*/
+
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -51,7 +49,7 @@ class listener implements EventSubscriberInterface
 		$this->user = $user;
 		$this->db = $db;
 		$this->root_path = $root_path;
-		$this->php_ext = $php_ext;		
+		$this->php_ext = $php_ext;
 	}
 
 	/**
